@@ -1,0 +1,12 @@
+.idea/
+.vscode/
+
+admission-system-backend/target/
+admission-system-backend/storage/
+
+admission-system-frontend/node_modules/
+admission-system-frontend/dist/
+
+*.log
+Thumbs.db
+Desktop.ini
