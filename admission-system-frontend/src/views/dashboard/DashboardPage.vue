@@ -1,39 +1,91 @@
-<script setup lang="ts">
-const metrics = [
-  { label: '代理申请', value: '草稿 / 提交 / 调剂' },
-  { label: '国内审核', value: '认领 / 补件 / 通过' },
-  { label: '学校审核', value: '候补 / 录取 / 拒绝' },
-  { label: '管理端', value: '批次 / 配额 / 用户' },
-]
-</script>
-
 <template>
   <section class="page-shell">
     <header class="page-header">
       <div>
-        <h1 class="page-title">首页工作台</h1>
-        <p class="page-subtitle">按角色拆分入口，先保证页面、路由、模块 API 和公共组件稳定。</p>
+        <h1 class="page-title">工作台</h1>
+        <p class="page-subtitle">
+          当前后端未开放 `dashboard` 汇总接口，本页只保留统一入口和信息架构，不自行编造业务数据。
+        </p>
       </div>
     </header>
 
     <div class="metric-grid">
-      <el-card v-for="item in metrics" :key="item.label" shadow="never" class="page-card metric-card">
-        <div class="metric-label">{{ item.label }}</div>
-        <div class="metric-value">{{ item.value }}</div>
-      </el-card>
+      <article class="metric-card">
+        <div class="metric-label">当前能力</div>
+        <div class="metric-value">真实联调</div>
+        <div class="hint-text">登录、申请、审核、候补、配额等核心链路已接真实接口。</div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-label">仪表盘状态</div>
+        <div class="metric-value">占位中</div>
+        <div class="hint-text">待后端开放汇总接口后再补统计卡片与提醒队列。</div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-label">联调准则</div>
+        <div class="metric-value">只认 v4</div>
+        <div class="hint-text">页面和数据都以后端接口文档 v4 与固定测试数据为准。</div>
+      </article>
+      <article class="metric-card">
+        <div class="metric-label">状态约束</div>
+        <div class="metric-value">统一状态机</div>
+        <div class="hint-text">不允许前端直改状态，只能通过真实命令接口推进业务。</div>
+      </article>
     </div>
 
-    <el-card shadow="never" class="page-card">
-      <div class="page-grid">
-        <div>
-          <strong>当前前端骨架已对齐</strong>
-          <div class="hint-text">路由结构、模块目录、service.ts、统一 Result&lt;T&gt;、公共组件。</div>
+    <div class="dashboard-grid">
+      <el-card shadow="never" class="page-card panel-card">
+        <h2 class="section-title">当前角色建议动作</h2>
+        <p class="section-subtitle">按冻结页与 ownership 表执行，不跨模块写页面和接口。</p>
+        <ul class="task-list">
+          <li>代理端仅处理申请、补件、候补确认、调剂确认。</li>
+          <li>国内审核只做详情、认领、提交，不自行扩列表接口。</li>
+          <li>学校审核与管理端以后端真实接口为准，未实现模块只保留占位。</li>
+        </ul>
+      </el-card>
+
+      <el-card shadow="never" class="page-card panel-card">
+        <h2 class="section-title">当前未开放接口</h2>
+        <p class="section-subtitle">这些能力不在当前迭代里强行 mock。</p>
+        <div class="api-list">
+          <span class="status-pill warning">/api/dashboard/**</span>
+          <span class="status-pill warning">/api/school-reviews/pending</span>
+          <span class="status-pill warning">/api/school-reviews/{id}</span>
         </div>
-        <div>
-          <strong>联调建议</strong>
-          <div class="hint-text">先从登录、我的申请、申请详情、学校审核提交四条链路开始。</div>
-        </div>
-      </div>
-    </el-card>
+      </el-card>
+    </div>
   </section>
 </template>
+
+<style scoped>
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  gap: 20px;
+}
+
+.panel-card {
+  padding: 26px;
+}
+
+.task-list {
+  display: grid;
+  gap: 12px;
+  padding-left: 20px;
+  margin: 22px 0 0;
+  color: #465a79;
+  line-height: 1.7;
+}
+
+.api-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 22px;
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+</style>

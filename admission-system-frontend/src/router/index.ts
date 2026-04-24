@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import AppLayout from '../layouts/AppLayout.vue'
 import LoginPage from '../views/login/LoginPage.vue'
+import ChangePasswordPage from '../views/login/ChangePasswordPage.vue'
 import DashboardPage from '../views/dashboard/DashboardPage.vue'
 import ApplicationCreatePage from '../views/applications/ApplicationCreatePage.vue'
 import ApplicationListPage from '../views/applications/ApplicationListPage.vue'
@@ -36,6 +37,16 @@ const router = createRouter({
       component: LoginPage,
       meta: {
         title: '登录',
+        hideInMenu: true,
+      },
+    },
+    {
+      path: '/change-password',
+      name: 'change-password',
+      component: ChangePasswordPage,
+      meta: {
+        title: '修改密码',
+        requiresAuth: true,
         hideInMenu: true,
       },
     },
@@ -153,10 +164,6 @@ router.beforeEach(async (to) => {
   const authStore = useAuthStore()
   const hasToken = authStore.hasToken
 
-  if (to.path === '/login' && hasToken) {
-    return '/dashboard'
-  }
-
   if (to.meta.requiresAuth !== false && to.path !== '/login') {
     if (!hasToken) {
       return '/login'
@@ -171,9 +178,21 @@ router.beforeEach(async (to) => {
       }
     }
 
+    if (authStore.requiresPasswordChange && to.path !== '/change-password') {
+      return '/change-password'
+    }
+
     if (to.meta.roles?.length && !to.meta.roles.includes(authStore.currentUser?.role as UserRole)) {
       return '/dashboard'
     }
+  }
+
+  if (to.path === '/login' && hasToken) {
+    return authStore.requiresPasswordChange ? '/change-password' : '/dashboard'
+  }
+
+  if (to.path === '/change-password' && hasToken && !authStore.requiresPasswordChange) {
+    return '/dashboard'
   }
 
   return true

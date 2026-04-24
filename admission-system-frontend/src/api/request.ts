@@ -22,7 +22,7 @@ request.interceptors.response.use(
       ElMessage.error(result.message || '请求失败')
       return Promise.reject(new Error(result.message || 'Request failed'))
     }
-    return result.data
+    return result.data as never
   },
   (error) => {
     const message = error.response?.data?.message || error.message || '网络异常'

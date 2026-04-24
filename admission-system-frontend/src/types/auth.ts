@@ -5,6 +5,11 @@ export interface LoginRequest {
   password: string
 }
 
+export interface ChangePasswordRequest {
+  oldPassword: string
+  newPassword: string
+}
+
 export interface CurrentUser {
   id: number
   username: string

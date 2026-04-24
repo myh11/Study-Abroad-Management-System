@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { loginApi, meApi } from '../api/auth/service'
-import type { CurrentUser, LoginRequest } from '../types/auth'
+import { changePasswordApi, loginApi, meApi } from '../api/auth/service'
+import type { ChangePasswordRequest, CurrentUser, LoginRequest } from '../types/auth'
 
 const TOKEN_KEY = 'admission-token'
 
@@ -10,6 +10,7 @@ export const useAuthStore = defineStore('auth', () => {
   const currentUser = ref<CurrentUser | null>(null)
 
   const hasToken = computed(() => Boolean(token.value))
+  const requiresPasswordChange = computed(() => Boolean(currentUser.value?.must_change_password))
 
   function setToken(value: string) {
     token.value = value
@@ -29,6 +30,11 @@ export const useAuthStore = defineStore('auth', () => {
     return user
   }
 
+  async function changePassword(payload: ChangePasswordRequest) {
+    await changePasswordApi(payload)
+    logout()
+  }
+
   function logout() {
     token.value = ''
     currentUser.value = null
@@ -39,8 +45,10 @@ export const useAuthStore = defineStore('auth', () => {
     token,
     currentUser,
     hasToken,
+    requiresPasswordChange,
     login,
     fetchMe,
+    changePassword,
     logout,
     setToken,
   }
