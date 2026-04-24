@@ -1,14 +1,18 @@
 import request from '../request'
 
 export interface MajorPayload {
-  major_code: string
-  school_code: string
-  major_name: string
-  min_average_score?: number | null
-  reserve_line?: number | null
-  waitlist_line?: number | null
-  allow_adjustment_in: boolean
-  is_enabled: boolean
+  majorCode: string
+  schoolCode: string
+  majorName: string
+  minAverageScore?: number | null
+  minMathScore?: number | null
+  minEnglishScore?: number | null
+  minPhysicsScore?: number | null
+  minLiberalArtsScore?: number | null
+  reserveLine?: number | null
+  waitlistLine?: number | null
+  allowAdjustmentIn: boolean
+  enabled: boolean
 }
 
 export function getMajors(schoolCode?: string) {
@@ -23,10 +27,10 @@ export function createMajor(payload: MajorPayload) {
   return request.post<never, void>('/majors', payload)
 }
 
-export function updateMajor(majorCode: string, payload: Omit<MajorPayload, 'major_code'>) {
+export function updateMajor(majorCode: string, payload: Omit<MajorPayload, 'majorCode'>) {
   return request.put<never, void>(`/majors/${majorCode}`, payload)
 }
 
-export function updateMajorStatus(majorCode: string, is_enabled: boolean) {
-  return request.post<never, void>(`/majors/${majorCode}/status`, { is_enabled })
+export function updateMajorStatus(majorCode: string, status: 'ENABLED' | 'DISABLED') {
+  return request.post<never, void>(`/majors/${majorCode}/status`, { status })
 }

@@ -1,10 +1,10 @@
 import request from '../request'
 
 export interface BatchPayload {
-  batch_name: string
-  start_time: string
-  end_time: string
-  batch_status: 'IN_PROGRESS' | 'FINISHED'
+  batchName: string
+  startTime: string
+  endTime: string
+  batchStatus: 'IN_PROGRESS' | 'FINISHED'
 }
 
 export function getBatches() {
@@ -19,6 +19,6 @@ export function updateBatch(batchId: number, payload: BatchPayload) {
   return request.put<never, void>(`/batches/${batchId}`, payload)
 }
 
-export function updateBatchStatus(batchId: number, batch_status: 'IN_PROGRESS' | 'FINISHED') {
-  return request.post<never, void>(`/batches/${batchId}/status`, { batch_status })
+export function updateBatchStatus(batchId: number, status: 'IN_PROGRESS' | 'FINISHED') {
+  return request.post<never, void>(`/batches/${batchId}/status`, { status })
 }
