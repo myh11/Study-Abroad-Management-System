@@ -2,6 +2,11 @@ import request from '../request'
 
 export interface SchoolReviewSubmitPayload {
   review_result: 'RESERVE' | 'SUGGEST_ADJUSTMENT' | 'WAITLIST' | 'REJECT'
+  review_reason: string
+  school_threshold_passed: boolean
+  major_threshold_passed: boolean
+  school_quota_passed: boolean
+  major_quota_passed: boolean
   academic_score: number
   material_score: number
   matching_score: number
