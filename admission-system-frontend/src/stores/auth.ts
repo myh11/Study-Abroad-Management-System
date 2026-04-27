@@ -1,7 +1,7 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { loginApi, meApi } from '../api/auth/service'
-import type { CurrentUser, LoginRequest } from '../types/auth'
+import { changePasswordApi, loginApi, meApi } from '../api/auth/service'
+import type { ChangePasswordRequest, CurrentUser, LoginRequest } from '../types/auth'
 
 const TOKEN_KEY = 'admission-token'
 
@@ -10,6 +10,10 @@ export const useAuthStore = defineStore('auth', () => {
   const currentUser = ref<CurrentUser | null>(null)
 
   const hasToken = computed(() => Boolean(token.value))
+  const needChangePassword = computed(() => {
+    // 兼容后端返回字段命名差异
+    return Boolean(currentUser.value?.must_change_password || currentUser.value?.mustChangePassword)
+  })
 
   function setToken(value: string) {
     token.value = value
@@ -21,6 +25,12 @@ export const useAuthStore = defineStore('auth', () => {
     setToken(response.token)
     currentUser.value = response.user
     return response
+  }
+
+  async function changePassword(payload: ChangePasswordRequest) {
+    await changePasswordApi(payload)
+    // 改密成功后立刻刷新 me，确保 mustChangePassword 状态同步
+    return fetchMe()
   }
 
   async function fetchMe() {
@@ -35,11 +45,13 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem(TOKEN_KEY)
   }
 
-  return {
+  return {        //将暴露的方法和状态导出
     token,
     currentUser,
     hasToken,
+    needChangePassword,
     login,
+    changePassword,
     fetchMe,
     logout,
     setToken,

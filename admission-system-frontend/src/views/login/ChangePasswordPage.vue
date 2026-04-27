@@ -11,25 +11,30 @@ const authStore = useAuthStore()
 const submitting = ref(false)
 
 const formModel = reactive({
-  username: 'agent01',
-  password: 'agent123',
+  oldPassword: '',
+  newPassword: '',
+  confirmPassword: '',
 })
 
-async function handleLogin() {
+async function handleSubmit() {
+  if (!formModel.oldPassword || !formModel.newPassword || !formModel.confirmPassword) {
+    toast.error('请完整填写密码信息')
+    return
+  }
+
+  if (formModel.newPassword !== formModel.confirmPassword) {
+    toast.error('两次输入的新密码不一致')
+    return
+  }
+
   submitting.value = true
   try {
-    await authStore.login(formModel)
-    // 登录成功后立即拉取 me，保证角色/强制改密状态与后端一致
-    await authStore.fetchMe()
-
-    if (authStore.needChangePassword) {
-      toast.success('登录成功，请先修改密码')
-      router.replace('/change-password')
-      return
-    }
-
-    toast.success('登录成功')
-    router.push('/dashboard')
+    await authStore.changePassword({
+      oldPassword: formModel.oldPassword,
+      newPassword: formModel.newPassword,
+    })
+    toast.success('密码修改成功，请继续使用系统')
+    router.replace('/dashboard')
   } finally {
     submitting.value = false
   }
@@ -40,19 +45,23 @@ async function handleLogin() {
   <div class="login-shell">
     <div class="login-panel page-card">
       <div class="login-copy">
-        <div class="badge">PRD 对齐</div>
-        <h1>留学申请与审核系统</h1>
-        <p>基于当前后端接口、角色权限和分工文档整理的前端公共骨架。</p>
+        <div class="badge">首次登录</div>
+        <h1>请先修改初始密码</h1>
+        <p>为保障账号安全，首次登录后必须先修改密码，修改成功后才能访问业务页面。</p>
       </div>
+
       <AppForm>
-        <el-form-item label="用户名">
-          <el-input v-model="formModel.username" placeholder="请输入用户名" />
+        <el-form-item label="旧密码">
+          <el-input v-model="formModel.oldPassword" type="password" show-password placeholder="请输入旧密码" />
         </el-form-item>
-        <el-form-item label="密码">
-          <el-input v-model="formModel.password" type="password" show-password placeholder="请输入密码" />
+        <el-form-item label="新密码">
+          <el-input v-model="formModel.newPassword" type="password" show-password placeholder="请输入新密码" />
+        </el-form-item>
+        <el-form-item label="确认新密码">
+          <el-input v-model="formModel.confirmPassword" type="password" show-password placeholder="请再次输入新密码" />
         </el-form-item>
         <el-form-item>
-          <AppButton type="primary" :loading="submitting" @click="handleLogin">登录</AppButton>
+          <AppButton type="primary" :loading="submitting" @click="handleSubmit">确认修改</AppButton>
         </el-form-item>
       </AppForm>
     </div>
@@ -81,7 +90,7 @@ async function handleLogin() {
 
 .login-copy h1 {
   margin: 18px 0 12px;
-  font-size: 40px;
+  font-size: 34px;
   line-height: 1.1;
 }
 
