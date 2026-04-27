@@ -21,13 +21,14 @@ const claiming = ref(false)
 const errorText = ref('')
 const detail = ref<ApplicationDetail | null>(null)
 
-// 仅在 SUBMITTED 状态允许认领
-const canClaim = computed(() => detail.value?.current_status === 'SUBMITTED')
+// 后端详情结构按负责人说明：basicInfo / studentInfo / applicationInfo
+const basicInfo = computed<any>(() => (detail.value as any)?.basicInfo)
+const studentInfo = computed<any>(() => (detail.value as any)?.studentInfo)
+const applicationInfo = computed<any>(() => (detail.value as any)?.applicationInfo)
 
-// 提交审核前必须处于“国内审核中”
-const canSubmit = computed(() => detail.value?.current_status === 'DOMESTIC_REVIEWING')
+const canClaim = computed(() => applicationInfo.value?.currentStatus === 'SUBMITTED')
+const canSubmit = computed(() => applicationInfo.value?.currentStatus === 'DOMESTIC_REVIEWING')
 
-// 与后端 DTO 对齐的提交表单模型
 const form = ref<SubmitDomesticReviewPayload>({
   materialComplete: true,
   identityMatched: true,
@@ -57,7 +58,6 @@ async function loadDetail() {
   }
 }
 
-//二次检验：就算按钮显示了也还要再检查一次，如果条件不满足，就直接弹出警告，不发出请求
 async function handleClaim() {
   if (!canClaim.value) {
     ElMessage.warning('当前状态不可认领，仅 SUBMITTED 状态可认领')
@@ -69,8 +69,7 @@ async function handleClaim() {
     await claimDomesticReview(applicationId.value)
     await loadDetail()
 
-    // 认领后期望进入 DOMESTIC_REVIEWING，若未变化则提示人工复核
-    if (detail.value?.current_status !== 'DOMESTIC_REVIEWING') {
+    if (applicationInfo.value?.currentStatus !== 'DOMESTIC_REVIEWING') {
       ElMessage.warning('认领请求已发送，但状态未变为 DOMESTIC_REVIEWING，请联系后端排查')
       return
     }
@@ -82,17 +81,14 @@ async function handleClaim() {
 }
 
 async function handleSubmit() {
-  // 二次检验：未认领（非 DOMESTIC_REVIEWING）时不允许提交
   if (!canSubmit.value) {
     ElMessage.warning('当前状态不可提交审核，请先完成认领并进入 DOMESTIC_REVIEWING')
     return
   }
-
   if (!form.value.comment.trim()) {
     ElMessage.warning('请填写审核意见')
     return
   }
-
   if (!form.value.authenticityRiskLevel.trim()) {
     ElMessage.warning('请选择风险等级')
     return
@@ -112,7 +108,6 @@ async function handleSubmit() {
 
     await loadDetail()
 
-    // 根据提交结论验证目标状态是否符合预期
     const expectedStatusMap: Record<SubmitDomesticReviewPayload['result'], string> = {
       PASS: 'SCHOOL_REVIEWING',
       SUPPLEMENT_REQUIRED: 'DOMESTIC_SUPPLEMENT',
@@ -120,8 +115,8 @@ async function handleSubmit() {
     }
     const expected = expectedStatusMap[form.value.result]
 
-    if (detail.value?.current_status !== expected) {
-      ElMessage.warning(`提交成功，但当前状态为 ${detail.value?.current_status ?? '-'}，期望 ${expected}，请联系后端排查`)
+    if (applicationInfo.value?.currentStatus !== expected) {
+      ElMessage.warning(`提交成功，但当前状态为 ${applicationInfo.value?.currentStatus ?? '-'}，期望 ${expected}，请联系后端排查`)
       return
     }
 
@@ -142,56 +137,33 @@ onMounted(loadDetail)
 
       <el-skeleton v-if="loading" :rows="6" animated />
 
-      <el-alert
-        v-else-if="errorText" 
-        type="error"
-        :closable="false"
-        :title="errorText"
-        class="state-block"
-      />
+      <el-alert v-else-if="errorText" type="error" :closable="false" :title="errorText" class="state-block" />
 
-      <el-alert
-        v-else-if="!detail"
-        type="warning"
-        :closable="false"
-        title="未查询到申请详情"
-        class="state-block"
-      />
+      <el-alert v-else-if="!detail" type="warning" :closable="false" title="未查询到申请详情" class="state-block" />
 
       <div v-else class="content-grid">
         <div class="info-block">
           <h3>申请信息</h3>
-          <p>申请编号：{{ detail.application_id }}</p>
-          <p>当前状态：{{ detail.current_status }}</p>
-          <p>目标学校：{{ detail.target_school_name || '-' }}</p>
-          <p>目标专业：{{ detail.target_major_name || '-' }}</p>
+          <p>申请编号：{{ basicInfo?.applicationId || '-' }}</p>
+          <p>当前状态：{{ applicationInfo?.currentStatus || '-' }}</p>
+          <p>目标学校：{{ applicationInfo?.targetSchoolName || '-' }}</p>
+          <p>目标专业：{{ applicationInfo?.targetMajorName || '-' }}</p>
         </div>
 
         <div class="info-block">
           <h3>学生信息</h3>
-          <p>姓名：{{ detail.student_name || '-' }}</p>
-          <p>证件号：{{ detail.id_card || '-' }}</p>
-          <p>GPA：{{ detail.gpa ?? '-' }}</p>
-          <p>语言分：{{ detail.language_score ?? '-' }}</p>
+          <p>姓名：{{ studentInfo?.fullName || '-' }}</p>
+          <p>证件号：{{ studentInfo?.idNumber || '-' }}</p>
+          <p>GPA：{{ applicationInfo?.gpa ?? '-' }}</p>
+          <p>语言分：{{ applicationInfo?.languageScore ?? '-' }}</p>
         </div>
       </div>
 
       <AppForm v-if="detail" class="form-block">
-        <el-form-item label="材料完整性">
-          <el-switch v-model="form.materialComplete" />
-        </el-form-item>
-
-        <el-form-item label="身份匹配">
-          <el-switch v-model="form.identityMatched" />
-        </el-form-item>
-
-        <el-form-item label="基础成绩达标">
-          <el-switch v-model="form.basicScorePassed" />
-        </el-form-item>
-
-        <el-form-item label="规范性检查通过">
-          <el-switch v-model="form.standardizationPassed" />
-        </el-form-item>
+        <el-form-item label="材料完整性"><el-switch v-model="form.materialComplete" /></el-form-item>
+        <el-form-item label="身份匹配"><el-switch v-model="form.identityMatched" /></el-form-item>
+        <el-form-item label="基础成绩达标"><el-switch v-model="form.basicScorePassed" /></el-form-item>
+        <el-form-item label="规范性检查通过"><el-switch v-model="form.standardizationPassed" /></el-form-item>
 
         <el-form-item label="风险等级(authenticityRiskLevel)">
           <el-select v-model="form.authenticityRiskLevel" style="width: 240px">
@@ -210,25 +182,13 @@ onMounted(loadDetail)
         </el-form-item>
 
         <el-form-item label="审核意见(comment)">
-          <el-input
-            v-model="form.comment"
-            type="textarea"
-            :rows="4"
-            placeholder="请填写审核意见"
-          />
+          <el-input v-model="form.comment" type="textarea" :rows="4" placeholder="请填写审核意见" />
         </el-form-item>
 
         <el-form-item>
           <div class="actions">
             <AppButton v-if="canClaim" :loading="claiming" @click="handleClaim">认领审核</AppButton>
-            <AppButton
-              type="primary"
-              :loading="submitting"
-              :disabled="!canSubmit"
-              @click="handleSubmit"
-            >
-              提交审核
-            </AppButton>
+            <AppButton type="primary" :loading="submitting" :disabled="!canSubmit" @click="handleSubmit">提交审核</AppButton>
           </div>
           <p v-if="!canSubmit" class="form-tip">当前状态不是 DOMESTIC_REVIEWING，暂不可提交审核。</p>
         </el-form-item>
@@ -238,62 +198,15 @@ onMounted(loadDetail)
 </template>
 
 <style scoped>
-.review-detail-page {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.title {
-  margin: 0;
-  font-size: 24px;
-}
-
-.subtitle {
-  margin: 6px 0 0;
-  color: #64748b;
-}
-
-.state-block {
-  margin-top: 16px;
-}
-
-.content-grid {
-  margin-top: 18px;
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
-.info-block {
-  padding: 14px;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  background: #fff;
-}
-
-.info-block h3 {
-  margin: 0 0 10px;
-  font-size: 16px;
-}
-
-.info-block p {
-  margin: 6px 0;
-  color: #334155;
-}
-
-.form-block {
-  margin-top: 20px;
-}
-
-.actions {
-  display: flex;
-  gap: 10px;
-}
-
-.form-tip {
-  margin: 8px 0 0;
-  color: #b45309;
-  font-size: 13px;
-}
+.review-detail-page { display: flex; flex-direction: column; gap: 16px; }
+.title { margin: 0; font-size: 24px; }
+.subtitle { margin: 6px 0 0; color: #64748b; }
+.state-block { margin-top: 16px; }
+.content-grid { margin-top: 18px; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.info-block { padding: 14px; border: 1px solid #e5e7eb; border-radius: 10px; background: #fff; }
+.info-block h3 { margin: 0 0 10px; font-size: 16px; }
+.info-block p { margin: 6px 0; color: #334155; }
+.form-block { margin-top: 20px; }
+.actions { display: flex; gap: 10px; }
+.form-tip { margin: 8px 0 0; color: #b45309; font-size: 13px; }
 </style>

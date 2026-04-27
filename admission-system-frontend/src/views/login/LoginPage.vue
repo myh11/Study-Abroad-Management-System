@@ -19,15 +19,6 @@ async function handleLogin() {
   submitting.value = true
   try {
     await authStore.login(formModel)
-    // 登录成功后立即拉取 me，保证角色/强制改密状态与后端一致
-    await authStore.fetchMe()
-
-    if (authStore.needChangePassword) {
-      toast.success('登录成功，请先修改密码')
-      router.replace('/change-password')
-      return
-    }
-
     toast.success('登录成功')
     router.push('/dashboard')
   } finally {
