@@ -62,8 +62,16 @@ function canWaitlistConfirm() {
   return status.value === 'WAITLIST_PENDING_CONFIRM'
 }
 
-function canAdjustment() {
-  return status.value === 'ADJUSTMENT_SUGGESTED'
+function isAdjustmentDraft() {
+  return status.value === 'DRAFT' && Boolean(detail.value?.applicationInfo?.sourceApplicationId)
+}
+
+function canAcceptAdjustment() {
+  return isAdjustmentDraft()
+}
+
+function canRejectAdjustment() {
+  return status.value === 'ADJUSTMENT_SUGGESTED' || isAdjustmentDraft()
 }
 
 async function loadDetail() {
@@ -413,16 +421,16 @@ const adjustmentItems = computed(() => renderMap(detail.value?.adjustmentSummary
           </div>
 
           <!-- Adjustment actions -->
-          <div v-if="canAdjustment()" class="section-card">
+          <div v-if="canAcceptAdjustment() || canRejectAdjustment()" class="section-card">
             <div class="section-title-row">
               <el-icon><Document /></el-icon>
               <h3>调剂处理</h3>
             </div>
             <div class="action-row">
-              <el-button type="primary" @click="handleAcceptAdjustment">
+              <el-button v-if="canAcceptAdjustment()" type="primary" @click="handleAcceptAdjustment">
                 <el-icon><CircleCheck /></el-icon> 接受调剂
               </el-button>
-              <el-button type="danger" plain @click="handleRejectAdjustment">
+              <el-button v-if="canRejectAdjustment()" type="danger" plain @click="handleRejectAdjustment">
                 <el-icon><CloseBold /></el-icon> 拒绝调剂
               </el-button>
             </div>

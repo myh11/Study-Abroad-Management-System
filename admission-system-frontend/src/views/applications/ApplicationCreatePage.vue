@@ -287,7 +287,7 @@ async function handleSubmit() {
         <ul v-if="attachmentFiles.length > 0" class="file-list-ul">
           <li v-for="(f, i) in attachmentFiles" :key="i" class="file-item">
             <div class="file-info">
-              <el-icon><FileText /></el-icon>
+              <el-icon><Document /></el-icon>
               <span>{{ f.name }}</span>
               <span class="file-size">{{ f.size }}</span>
             </div>
