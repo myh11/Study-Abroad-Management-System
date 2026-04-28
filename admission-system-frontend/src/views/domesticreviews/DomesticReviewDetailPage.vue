@@ -10,6 +10,12 @@ import {
   submitDomesticReview,
   type SubmitDomesticReviewPayload,
 } from '../../api/domesticreviews/service'
+import {
+  canClaimByStatus,
+  canSubmitByStatus,
+  getExpectedStatusByResult,
+  validateSubmitPayload,
+} from './reviewHelpers'
 import type { ApplicationDetail } from '../../types/application'
 
 const route = useRoute()
@@ -28,8 +34,8 @@ const applicationInfo = computed<any>(() => (detail.value as any)?.applicationIn
 const scoreSummary = computed<any>(() => (detail.value as any)?.scoreSummary)
 
 const currentStatus = computed(() => basicInfo.value?.status)
-const canClaim = computed(() => currentStatus.value === 'SUBMITTED')
-const canSubmit = computed(() => currentStatus.value === 'DOMESTIC_REVIEWING')
+const canClaim = computed(() => canClaimByStatus(currentStatus.value))
+const canSubmit = computed(() => canSubmitByStatus(currentStatus.value))
 
 const form = ref<SubmitDomesticReviewPayload>({
   materialComplete: true,
@@ -87,12 +93,14 @@ async function handleSubmit() {
     ElMessage.warning('当前状态不可提交审核，请先完成认领并进入 DOMESTIC_REVIEWING')
     return
   }
-  if (!form.value.comment.trim()) {
-    ElMessage.warning('请填写审核意见')
-    return
-  }
-  if (!form.value.authenticityRiskLevel.trim()) {
-    ElMessage.warning('请选择风险等级')
+
+  const validation = validateSubmitPayload(form.value)
+  if (!validation.valid) {
+    if (validation.reason === 'EMPTY_COMMENT') {
+      ElMessage.warning('请填写审核意见')
+    } else {
+      ElMessage.warning('请选择风险等级')
+    }
     return
   }
 
@@ -110,12 +118,7 @@ async function handleSubmit() {
 
     await loadDetail()
 
-    const expectedStatusMap: Record<SubmitDomesticReviewPayload['result'], string> = {
-      PASS: 'SCHOOL_REVIEWING',
-      SUPPLEMENT_REQUIRED: 'DOMESTIC_SUPPLEMENT',
-      REJECT: 'DOMESTIC_REJECTED',
-    }
-    const expected = expectedStatusMap[form.value.result]
+    const expected = getExpectedStatusByResult(form.value.result)
 
     if (currentStatus.value !== expected) {
       ElMessage.warning(`提交成功，但当前状态为 ${currentStatus.value ?? '-'}，期望 ${expected}，请联系后端排查`)
