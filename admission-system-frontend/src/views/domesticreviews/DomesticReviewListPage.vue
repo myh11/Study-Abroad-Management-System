@@ -4,8 +4,8 @@ import PagePlaceholder from '../shared/PagePlaceholder.vue'
 
 <template>
   <PagePlaceholder
-    title="国内审核列表"
-    subtitle="页面目录和角色路由已就位，当前后端尚未提供专门列表接口。"
-    api-hint="先复用申请详情和 `/api/domesticreviews/{applicationId}/claim|submit` 做联调；列表接口待后端补充。"
+    title="国内审核列表（占位）"
+    subtitle="当前后端尚未开放国内审核列表接口，请通过固定 applicationId 进入详情页联调。"
+    api-hint="可直接访问 `/domesticreviews/122`、`/domesticreviews/123`、`/domesticreviews/124`、`/domesticreviews/134`、`/domesticreviews/136`、`/domesticreviews/142`、`/domesticreviews/143`。"
   />
 </template>
