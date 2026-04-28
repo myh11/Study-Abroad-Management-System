@@ -21,13 +21,15 @@ const claiming = ref(false)
 const errorText = ref('')
 const detail = ref<ApplicationDetail | null>(null)
 
-// 后端详情结构按负责人说明：basicInfo / studentInfo / applicationInfo
+// 后端详情结构按负责人说明：basicInfo / studentInfo / applicationInfo / scoreSummary
 const basicInfo = computed<any>(() => (detail.value as any)?.basicInfo)
 const studentInfo = computed<any>(() => (detail.value as any)?.studentInfo)
 const applicationInfo = computed<any>(() => (detail.value as any)?.applicationInfo)
+const scoreSummary = computed<any>(() => (detail.value as any)?.scoreSummary)
 
-const canClaim = computed(() => applicationInfo.value?.currentStatus === 'SUBMITTED')
-const canSubmit = computed(() => applicationInfo.value?.currentStatus === 'DOMESTIC_REVIEWING')
+const currentStatus = computed(() => basicInfo.value?.status)
+const canClaim = computed(() => currentStatus.value === 'SUBMITTED')
+const canSubmit = computed(() => currentStatus.value === 'DOMESTIC_REVIEWING')
 
 const form = ref<SubmitDomesticReviewPayload>({
   materialComplete: true,
@@ -69,7 +71,7 @@ async function handleClaim() {
     await claimDomesticReview(applicationId.value)
     await loadDetail()
 
-    if (applicationInfo.value?.currentStatus !== 'DOMESTIC_REVIEWING') {
+    if (currentStatus.value !== 'DOMESTIC_REVIEWING') {
       ElMessage.warning('认领请求已发送，但状态未变为 DOMESTIC_REVIEWING，请联系后端排查')
       return
     }
@@ -115,8 +117,8 @@ async function handleSubmit() {
     }
     const expected = expectedStatusMap[form.value.result]
 
-    if (applicationInfo.value?.currentStatus !== expected) {
-      ElMessage.warning(`提交成功，但当前状态为 ${applicationInfo.value?.currentStatus ?? '-'}，期望 ${expected}，请联系后端排查`)
+    if (currentStatus.value !== expected) {
+      ElMessage.warning(`提交成功，但当前状态为 ${currentStatus.value ?? '-'}，期望 ${expected}，请联系后端排查`)
       return
     }
 
@@ -145,17 +147,17 @@ onMounted(loadDetail)
         <div class="info-block">
           <h3>申请信息</h3>
           <p>申请编号：{{ basicInfo?.applicationId || '-' }}</p>
-          <p>当前状态：{{ applicationInfo?.currentStatus || '-' }}</p>
-          <p>目标学校：{{ applicationInfo?.targetSchoolName || '-' }}</p>
-          <p>目标专业：{{ applicationInfo?.targetMajorName || '-' }}</p>
+          <p>当前状态：{{ basicInfo?.status || '-' }}</p>
+          <p>目标学校：{{ applicationInfo?.targetSchoolCode || '-' }}</p>
+          <p>目标专业：{{ applicationInfo?.targetMajorCode || '-' }}</p>
         </div>
 
         <div class="info-block">
           <h3>学生信息</h3>
-          <p>姓名：{{ studentInfo?.fullName || '-' }}</p>
-          <p>证件号：{{ studentInfo?.idNumber || '-' }}</p>
-          <p>GPA：{{ applicationInfo?.gpa ?? '-' }}</p>
-          <p>语言分：{{ applicationInfo?.languageScore ?? '-' }}</p>
+          <p>姓名：{{ studentInfo?.name || '-' }}</p>
+          <p>证件号：{{ studentInfo?.idCardNo || '-' }}</p>
+          <p>平均分：{{ scoreSummary?.averageScore ?? '-' }}</p>
+          <p>语言分：{{ scoreSummary?.languageScore ?? '-' }}</p>
         </div>
       </div>
 
