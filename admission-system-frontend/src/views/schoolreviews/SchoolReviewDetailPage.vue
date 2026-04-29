@@ -7,11 +7,24 @@ import { getMajors } from '../../api/majors/service'
 import { submitSchoolReview } from '../../api/schoolreviews/service'
 import { useAuthStore } from '../../stores/auth'
 import { toast } from '../../components/common/toast'
-import type { ApplicationDetail } from '../../types/application'
 
 interface MajorOption {
   major_code: string
   major_name: string
+}
+
+interface ApplicationDetailView {
+  basicInfo?: Record<string, unknown>
+  studentInfo?: Record<string, unknown>
+  applicationInfo?: Record<string, unknown>
+  scoreSummary?: Record<string, unknown>
+  files?: Record<string, unknown>
+  domesticReviewSummary?: Record<string, unknown>
+  schoolReviewSummary?: Record<string, unknown>
+  adjustmentSummary?: Record<string, unknown>
+  ruleSnapshot?: Record<string, unknown>
+  statusHistory?: Array<Record<string, unknown>>
+  auditLogs?: Array<Record<string, unknown>>
 }
 
 const route = useRoute()
@@ -20,7 +33,7 @@ const authStore = useAuthStore()
 
 const loading = ref(false)
 const submitting = ref(false)
-const application = ref<ApplicationDetail | null>(null)
+const application = ref<ApplicationDetailView | null>(null)
 const majorOptions = ref<MajorOption[]>([])
 
 const scoreForm = reactive({
@@ -37,12 +50,20 @@ const decisionForm = reactive({
 
 const applicationId = computed(() => Number(route.params.id))
 const totalScore = computed(() => scoreForm.academic + scoreForm.material + scoreForm.matching)
+const basicInfo = computed<Record<string, unknown>>(() => application.value?.basicInfo ?? {})
+const studentInfo = computed<Record<string, unknown>>(() => application.value?.studentInfo ?? {})
+const applicationInfo = computed<Record<string, unknown>>(() => application.value?.applicationInfo ?? {})
+const scoreSummary = computed<Record<string, unknown>>(() => application.value?.scoreSummary ?? {})
+const schoolReviewSummary = computed<Record<string, unknown>>(() => application.value?.schoolReviewSummary ?? {})
+const ruleSnapshot = computed<Record<string, unknown>>(() => application.value?.ruleSnapshot ?? {})
+const statusHistory = computed<Array<Record<string, unknown>>>(() => application.value?.statusHistory ?? [])
+const auditLogs = computed<Array<Record<string, unknown>>>(() => application.value?.auditLogs ?? [])
 const canSubmit = computed(
   () =>
     authStore.currentUser?.role === 'SCHOOL_REVIEWER' &&
-    application.value?.current_status === 'SCHOOL_REVIEWING',
+    basicInfo.value.status === 'SCHOOL_REVIEWING',
 )
-const schoolCode = computed(() => application.value?.school_code || authStore.currentUser?.school_code || '')
+const schoolCode = computed(() => String(applicationInfo.value.targetSchoolCode ?? authStore.currentUser?.school_code ?? ''))
 const reviewDecisions = [
   { value: 'RESERVE', label: '占位录取', hint: '直接占用学校与专业配额。', tone: 'success' },
   { value: 'WAITLIST', label: '加入候补', hint: '进入候补队列，后续由候补补位接口推进。', tone: 'warning' },
@@ -59,11 +80,19 @@ const statusToneMap: Record<string, string> = {
 }
 
 const latestHistoryStatus = computed(() => {
-  if (!application.value || application.value.status_histories.length === 0) {
-    return application.value?.current_status || ''
+  if (statusHistory.value.length === 0) {
+    return String(basicInfo.value.status ?? '')
   }
-  return application.value.status_histories[application.value.status_histories.length - 1]?.to_status
+  const last = statusHistory.value[statusHistory.value.length - 1] ?? {}
+  return String(last.newStatus ?? basicInfo.value.status ?? '')
 })
+
+function displayValue(value: unknown) {
+  if (value === null || value === undefined || value === '') {
+    return '-'
+  }
+  return String(value)
+}
 
 async function loadApplication() {
   loading.value = true
@@ -97,7 +126,7 @@ async function handleSubmit() {
 
   submitting.value = true
   try {
-    await submitSchoolReview(application.value.id, {
+    await submitSchoolReview(applicationId.value, {
       review_result: decisionForm.result,
       review_reason: decisionForm.reason,
       school_threshold_passed: true,
@@ -143,36 +172,36 @@ onMounted(loadApplication)
             <div class="section-head">
               <div>
                 <h2 class="section-title">申请概览</h2>
-                <p class="section-subtitle">当前申请编号 {{ application.id }}</p>
+                <p class="section-subtitle">当前申请编号 {{ displayValue(basicInfo.applicationId) }}</p>
               </div>
-              <span class="status-pill" :class="statusToneMap[application.current_status] || 'info'">
-                {{ application.current_status }}
+              <span class="status-pill" :class="statusToneMap[String(basicInfo.status || '')] || 'info'">
+                {{ displayValue(basicInfo.status) }}
               </span>
             </div>
             <div class="info-grid">
               <div class="info-item">
                 <span>学校代码</span>
-                <strong>{{ application.school_code }}</strong>
+                <strong>{{ displayValue(applicationInfo.targetSchoolCode) }}</strong>
               </div>
               <div class="info-item">
                 <span>专业代码</span>
-                <strong>{{ application.major_code }}</strong>
+                <strong>{{ displayValue(applicationInfo.targetMajorCode) }}</strong>
               </div>
               <div class="info-item">
                 <span>学生姓名</span>
-                <strong>{{ application.student.full_name }}</strong>
+                <strong>{{ displayValue(studentInfo.name) }}</strong>
               </div>
               <div class="info-item">
                 <span>当前学校</span>
-                <strong>{{ application.student.current_school }}</strong>
+                <strong>{{ displayValue(studentInfo.currentSchool) }}</strong>
               </div>
               <div class="info-item">
                 <span>联系方式</span>
-                <strong>{{ application.student.phone }}</strong>
+                <strong>{{ displayValue(studentInfo.phone) }}</strong>
               </div>
               <div class="info-item">
                 <span>证件号</span>
-                <strong>{{ application.student.id_number }}</strong>
+                <strong>{{ displayValue(studentInfo.idCardNo) }}</strong>
               </div>
             </div>
           </el-card>
@@ -229,23 +258,23 @@ onMounted(loadApplication)
             <div class="timeline-list">
               <div class="timeline-row">
                 <span>平均分</span>
-                <strong>{{ application.transcript.average_score }}</strong>
+                <strong>{{ displayValue(scoreSummary.averageScore) }}</strong>
               </div>
               <div class="timeline-row">
                 <span>不及格门数</span>
-                <strong>{{ application.transcript.failed_subject_count }}</strong>
+                <strong>{{ displayValue(scoreSummary.failedSubjectCount) }}</strong>
               </div>
               <div class="timeline-row">
                 <span>课程成绩摘要</span>
-                <strong>{{ application.transcript.course_scores }}</strong>
+                <strong>{{ displayValue(scoreSummary.transcriptSchoolName) }}</strong>
               </div>
               <div class="timeline-row">
                 <span>文书字数</span>
-                <strong>{{ application.personal_statement.word_count }}</strong>
+                <strong>{{ displayValue(schoolReviewSummary.total_score) }}</strong>
               </div>
               <div class="timeline-row">
                 <span>最近状态流转</span>
-                <strong>{{ latestHistoryStatus || application.current_status }}</strong>
+                <strong>{{ latestHistoryStatus || displayValue(basicInfo.status) }}</strong>
               </div>
             </div>
           </el-card>
@@ -319,15 +348,15 @@ onMounted(loadApplication)
             <div class="timeline-list">
               <div class="timeline-row">
                 <span>状态历史数</span>
-                <strong>{{ application.status_histories.length }}</strong>
+                <strong>{{ statusHistory.length }}</strong>
               </div>
               <div class="timeline-row">
                 <span>审计日志数</span>
-                <strong>{{ application.audit_logs.length }}</strong>
+                <strong>{{ auditLogs.length }}</strong>
               </div>
               <div class="timeline-row">
                 <span>规则快照数</span>
-                <strong>{{ application.rule_snapshots.length }}</strong>
+                <strong>{{ Object.keys(ruleSnapshot).length ? 1 : 0 }}</strong>
               </div>
             </div>
             <el-alert type="info" :closable="false" show-icon>
