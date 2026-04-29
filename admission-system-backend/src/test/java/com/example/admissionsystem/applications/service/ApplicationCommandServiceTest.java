@@ -29,6 +29,8 @@ class ApplicationCommandServiceTest {
     @Mock
     private QuotaConcurrencyService quotaConcurrencyService;
     @Mock
+    private ApplicationConstraintService applicationConstraintService;
+    @Mock
     private JdbcTemplate jdbcTemplate;
 
     private ApplicationCommandService applicationCommandService;
@@ -38,6 +40,7 @@ class ApplicationCommandServiceTest {
         applicationCommandService = new ApplicationCommandService(
                 applicationStatusService,
                 quotaConcurrencyService,
+                applicationConstraintService,
                 jdbcTemplate,
                 new ObjectMapper()
         );

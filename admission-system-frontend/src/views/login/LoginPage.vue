@@ -18,7 +18,9 @@ const demoAccounts = [
   { label: '系统管理员', username: 'admin', password: 'admin123' },
   { label: '代理专员', username: 'agent01', password: 'agent123' },
   { label: '国内审查员', username: 'domestic01', password: 'domestic123' },
-  { label: '学校专员', username: 'school01', password: 'school123' },
+  { label: '学校专员（USYD）', username: 'school_usyd_01', password: 'school123' },
+  { label: '学校专员（ANU）', username: 'school_anu_01', password: 'school123' },
+  { label: '学校专员（UNSW）', username: 'school_unsw_01', password: 'school123' },
 ]
 
 async function handleLogin() {

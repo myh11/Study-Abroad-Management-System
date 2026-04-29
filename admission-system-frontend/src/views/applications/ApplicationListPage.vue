@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { Plus, Search, View, Upload, RefreshLeft } from '@element-plus/icons-vue'
 import { ElMessage } from 'element-plus'
@@ -10,7 +10,7 @@ const loading = ref(false)
 
 const query = reactive({
   page: 1,
-  pageSize: 10,
+  pageSize: 50,
   status: '',
   keyword: '',
 })
@@ -18,7 +18,7 @@ const query = reactive({
 const pageResult = reactive({
   list: [] as any[],
   page: 1,
-  pageSize: 10,
+  pageSize: 50,
   total: 0,
 })
 
@@ -59,9 +59,20 @@ function statusColor(status: string) {
 }
 
 function tabCount(key: string) {
-  if (!key) return pageResult.total
-  return pageResult.list.filter((a) => a.status === key).length
+  const source = displayList.value
+  if (!key) return source.length
+  return source.filter((a) => a.status === key).length
 }
+
+const displayList = computed(() => {
+  const keyword = query.keyword.trim().toLowerCase()
+  if (!keyword) return pageResult.list
+  return pageResult.list.filter((row) =>
+    [row.applicationId, row.studentName, row.studentId, row.targetSchoolCode, row.targetMajorCode]
+      .filter(Boolean)
+      .some((value) => String(value).toLowerCase().includes(keyword)),
+  )
+})
 
 function canSubmit(status: string) {
   return status === 'DRAFT' || status === 'DOMESTIC_SUPPLEMENT'
@@ -132,7 +143,9 @@ function onTabClick(key: string) {
     <div class="page-header">
       <div>
         <h1 class="page-title">申请列表</h1>
-        <p class="page-subtitle">共 {{ pageResult.total }} 条申请记录</p>
+        <p class="page-subtitle">
+          当前账号共 {{ pageResult.total }} 条申请记录，当前页显示 {{ displayList.length }} 条
+        </p>
       </div>
       <el-button type="primary" @click="$router.push('/applications/create')">
         <el-icon><Plus /></el-icon> 新建申请
@@ -144,9 +157,14 @@ function onTabClick(key: string) {
       <div class="filter-bar">
         <div class="search-box">
           <el-icon class="search-icon"><Search /></el-icon>
-          <el-input v-model="query.keyword" placeholder="搜索学生姓名 / 申请编号" clearable style="width: 260px" />
+          <el-input
+            v-model="query.keyword"
+            placeholder="当前页快速筛选：学生 / 申请编号 / 学校 / 专业"
+            clearable
+            style="width: 320px"
+          />
         </div>
-        <el-button type="primary" @click="query.page = 1; loadData()">查询</el-button>
+        <el-button type="primary" @click="query.page = 1; loadData()">刷新数据</el-button>
         <el-button @click="query.keyword = ''; query.status = ''; query.page = 1; loadData()">重置</el-button>
       </div>
     </div>
@@ -168,7 +186,7 @@ function onTabClick(key: string) {
       </div>
 
       <!-- Table -->
-      <el-table v-loading="loading" :data="pageResult.list" style="width: 100%">
+      <el-table v-loading="loading" :data="displayList" style="width: 100%">
         <el-table-column prop="applicationId" label="申请编号" min-width="110">
           <template #default="{ row }">
             <span class="mono-id">{{ row.applicationId }}</span>
@@ -218,7 +236,14 @@ function onTabClick(key: string) {
 
       <!-- Pagination -->
       <div class="pagination-bar">
-        <div class="pagination-info">共 {{ pageResult.total }} 条记录</div>
+        <div class="pagination-info">
+          <template v-if="query.keyword.trim()">
+            当前页快速筛选结果 {{ displayList.length }} 条
+          </template>
+          <template v-else>
+            共 {{ pageResult.total }} 条记录
+          </template>
+        </div>
         <el-pagination
           v-model:current-page="query.page"
           v-model:page-size="query.pageSize"

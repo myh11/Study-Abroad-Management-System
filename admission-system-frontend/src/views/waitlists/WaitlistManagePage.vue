@@ -41,6 +41,11 @@ async function loadWaitlist() {
   }
 }
 
+function useSample(applicationId: number) {
+  queryForm.applicationId = applicationId
+  void loadWaitlist()
+}
+
 async function handlePromote() {
   if (!waitlist.value) return
   actionLoading.value = true
@@ -93,11 +98,11 @@ onMounted(loadWaitlist)
       </div>
       <div class="quick-links">
         <el-tag
-          v-for="id in [128, 130, 144]"
+          v-for="id in [127, 128, 137, 141]"
           :key="id"
           class="quick-tag"
           effect="plain"
-          @click="queryForm.applicationId = id"
+          @click="useSample(id)"
         >
           固定样本 {{ id }}
         </el-tag>

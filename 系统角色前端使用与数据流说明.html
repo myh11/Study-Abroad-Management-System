@@ -1,0 +1,1042 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>留学申请与审核系统：角色使用与数据流说明</title>
+  <style>
+    :root {
+      --bg: #07111f;
+      --panel: rgba(10, 20, 38, 0.82);
+      --panel-strong: rgba(12, 24, 46, 0.96);
+      --line: rgba(131, 191, 255, 0.18);
+      --text: #eef6ff;
+      --muted: #96aeca;
+      --accent: #5ec8ff;
+      --accent-2: #7d8dff;
+      --green: #3ad08a;
+      --yellow: #ffd166;
+      --red: #ff6e7a;
+      --orange: #ff9a5a;
+      --shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
+      --radius: 18px;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(94, 200, 255, 0.18), transparent 28%),
+        radial-gradient(circle at top right, rgba(125, 141, 255, 0.2), transparent 26%),
+        radial-gradient(circle at bottom center, rgba(58, 208, 138, 0.12), transparent 20%),
+        linear-gradient(180deg, #06101c 0%, #091728 40%, #07111f 100%);
+      line-height: 1.65;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    .page {
+      width: min(1400px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 32px 0 72px;
+    }
+
+    .hero,
+    .section,
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+    }
+
+    .hero {
+      padding: 34px 34px 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: auto -80px -80px auto;
+      width: 260px;
+      height: 260px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(94, 200, 255, 0.18), transparent 70%);
+      pointer-events: none;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(94, 200, 255, 0.1);
+      border: 1px solid rgba(94, 200, 255, 0.18);
+      color: #bce8ff;
+      font-size: 13px;
+      margin-bottom: 14px;
+    }
+
+    h1, h2, h3 {
+      margin: 0;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      font-size: clamp(30px, 4vw, 48px);
+      line-height: 1.1;
+      margin-bottom: 12px;
+    }
+
+    .hero p {
+      margin: 0;
+      color: var(--muted);
+      max-width: 980px;
+      font-size: 16px;
+    }
+
+    .hero-stats {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .stat {
+      padding: 16px 18px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 24px;
+      margin-bottom: 6px;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin: 22px 0 18px;
+    }
+
+    .nav a {
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
+      color: #d6ebff;
+      font-size: 14px;
+    }
+
+    .section {
+      margin-top: 18px;
+      padding: 28px;
+    }
+
+    .section-title {
+      font-size: 26px;
+      margin-bottom: 8px;
+    }
+
+    .section-desc {
+      margin: 0 0 20px;
+      color: var(--muted);
+    }
+
+    .grid-4 {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .grid-2 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      padding: 18px;
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .card h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .card p,
+    .card li {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.05);
+      color: #d5ebff;
+    }
+
+    .timeline {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .step {
+      position: relative;
+      padding: 18px 16px 16px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02));
+      border: 1px solid rgba(255,255,255,0.08);
+      min-height: 205px;
+    }
+
+    .step::after {
+      content: "→";
+      position: absolute;
+      right: -13px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.35);
+      font-size: 22px;
+    }
+
+    .step:last-child::after {
+      display: none;
+    }
+
+    .step .index {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: inline-grid;
+      place-items: center;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(94, 200, 255, 0.14);
+      color: #d8f2ff;
+      margin-bottom: 12px;
+    }
+
+    .step h3 {
+      font-size: 18px;
+      margin-bottom: 8px;
+    }
+
+    .step p {
+      margin: 0 0 10px;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .mini {
+      margin: 6px 0 0;
+      padding-left: 18px;
+    }
+
+    .mini li {
+      margin: 4px 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .flow-box {
+      border-radius: 18px;
+      padding: 22px;
+      background:
+        linear-gradient(180deg, rgba(94, 200, 255, 0.05), rgba(125, 141, 255, 0.03)),
+        rgba(255,255,255,0.02);
+      border: 1px solid rgba(94, 200, 255, 0.12);
+    }
+
+    .flow-lanes {
+      display: grid;
+      grid-template-columns: 180px 1fr;
+      gap: 12px;
+      margin-top: 14px;
+    }
+
+    .lane-label,
+    .lane-track {
+      border-radius: 14px;
+      min-height: 72px;
+      padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+    }
+
+    .lane-label {
+      color: #dff2ff;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+    }
+
+    .track-cards {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .track-card {
+      padding: 10px 12px;
+      min-width: 190px;
+      border-radius: 12px;
+      background: rgba(6, 17, 34, 0.72);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .track-card strong {
+      display: block;
+      margin-bottom: 4px;
+      font-size: 14px;
+    }
+
+    .track-card span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .tab {
+      cursor: pointer;
+      padding: 10px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.04);
+      color: #d8ecff;
+      font-size: 14px;
+      transition: 0.2s ease;
+    }
+
+    .tab.active {
+      background: linear-gradient(135deg, rgba(94, 200, 255, 0.2), rgba(125, 141, 255, 0.18));
+      border-color: rgba(94, 200, 255, 0.28);
+      color: #fff;
+    }
+
+    .role-panel {
+      display: none;
+    }
+
+    .role-panel.active {
+      display: block;
+    }
+
+    .meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 10px 0 0;
+    }
+
+    .meta span {
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #dcefff;
+      font-size: 12px;
+    }
+
+    .detail-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+
+    .detail-table th,
+    .detail-table td {
+      padding: 13px 14px;
+      vertical-align: top;
+      text-align: left;
+      font-size: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+
+    .detail-table th {
+      color: #dff2ff;
+      background: rgba(255,255,255,0.04);
+      width: 18%;
+    }
+
+    .detail-table td {
+      color: var(--muted);
+    }
+
+    .detail-table tr:last-child td,
+    .detail-table tr:last-child th {
+      border-bottom: 0;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+
+    .status-strip {
+      display: grid;
+      grid-template-columns: repeat(11, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 18px;
+    }
+
+    .status-node {
+      padding: 12px 8px;
+      text-align: center;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+      background: rgba(255,255,255,0.03);
+      font-size: 12px;
+      color: #dcefff;
+    }
+
+    .footer-note {
+      margin-top: 24px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    @media (max-width: 1200px) {
+      .hero-stats,
+      .grid-4,
+      .timeline,
+      .status-strip {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .grid-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 900px) {
+      .grid-2,
+      .grid-3,
+      .grid-4,
+      .hero-stats,
+      .timeline,
+      .status-strip,
+      .flow-lanes {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-lanes {
+        display: block;
+      }
+
+      .lane-label {
+        margin-bottom: 10px;
+      }
+
+      .step::after {
+        display: none;
+      }
+
+      .detail-table,
+      .detail-table tbody,
+      .detail-table tr,
+      .detail-table th,
+      .detail-table td {
+        display: block;
+        width: 100%;
+      }
+
+      .detail-table th {
+        border-bottom: 0;
+        padding-bottom: 4px;
+      }
+
+      .detail-table td {
+        padding-top: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero" id="top">
+      <div class="eyebrow">前端使用说明 + 数据流说明 + 状态判定说明</div>
+      <h1>留学申请与审核系统<br />角色操作与数据流全景图</h1>
+      <p>
+        这份页面聚焦前端实际使用方式，按角色说明“进入哪个页面、做什么操作、提交什么数据、后端如何判断、状态如何推进”。
+        它既可以作为演示讲稿，也可以作为联调说明页来帮助团队统一口径。
+      </p>
+      <div class="hero-stats">
+        <div class="stat"><strong>4</strong><span>主要前端角色：管理员、代理专员、国内审核员、学校专员</span></div>
+        <div class="stat"><strong>11</strong><span>核心业务状态，从 DRAFT 到 CLOSED 构成完整生命周期</span></div>
+        <div class="stat"><strong>8+</strong><span>前端关键页面：登录、工作台、申请、国内审核、学校审核、候补、配置页</span></div>
+        <div class="stat"><strong>10+</strong><span>关键数据对象：申请、学生、成绩、审核、候补、状态历史、审计日志等</span></div>
+      </div>
+      <div class="nav">
+        <a href="#roles">角色入口</a>
+        <a href="#data">数据组成</a>
+        <a href="#status">状态流转</a>
+        <a href="#flow">数据流动</a>
+        <a href="#guide">分角色使用</a>
+        <a href="#judge">判定规则</a>
+      </div>
+    </section>
+
+    <section class="section" id="roles">
+      <h2 class="section-title">系统里有哪些角色</h2>
+      <p class="section-desc">
+        前端不是所有人都看同一套页面。登录成功后，系统会根据账号角色分配可见菜单、工作台指标和可执行动作。
+      </p>
+      <div class="grid-4">
+        <div class="card">
+          <h3>管理员 Admin</h3>
+          <p>负责基础数据配置和全局查看，包括批次、学校、专业、用户、配额、日志等后台页面。</p>
+          <div class="pill-row">
+            <span class="pill">Dashboard</span>
+            <span class="pill">批次管理</span>
+            <span class="pill">学校/专业</span>
+            <span class="pill">用户/配额</span>
+            <span class="pill">审计日志</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>代理专员 Agent</h3>
+          <p>负责创建申请、保存草稿、提交申请、补件、候补确认、调剂处理，是申请流的起点。</p>
+          <div class="pill-row">
+            <span class="pill">申请列表</span>
+            <span class="pill">创建申请</span>
+            <span class="pill">详情页</span>
+            <span class="pill">补件</span>
+            <span class="pill">候补确认</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>国内审核员 Domestic Reviewer</h3>
+          <p>负责认领申请并做国内初审，判断材料、身份、基础成绩和风险等级。</p>
+          <div class="pill-row">
+            <span class="pill">审核列表</span>
+            <span class="pill">申请详情</span>
+            <span class="pill">认领审核</span>
+            <span class="pill">提交结论</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>学校专员 School Reviewer</h3>
+          <p>负责学校侧终审，结合门槛、配额、学术分与匹配度给出录取、候补、调剂或拒绝。</p>
+          <div class="pill-row">
+            <span class="pill">学校审核列表</span>
+            <span class="pill">学校详情</span>
+            <span class="pill">学校评分</span>
+            <span class="pill">学校决策</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="data">
+      <h2 class="section-title">系统里流动的核心数据</h2>
+      <p class="section-desc">
+        一条申请不是只有“一个表单”。从前端视角看，它至少由用户信息、申请主体、审核结果、候补记录、状态历史几类数据共同组成。
+      </p>
+      <div class="grid-3">
+        <div class="card">
+          <h3>认证与权限数据</h3>
+          <ul class="mini">
+            <li><strong>users</strong>：username、role、schoolCode、mustChangePassword</li>
+            <li><strong>token</strong>：登录后写入请求头，决定后续接口权限</li>
+            <li><strong>/api/auth/me</strong>：前端刷新后恢复当前登录态</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>申请主体数据</h3>
+          <ul class="mini">
+            <li><strong>applications</strong>：applicationId、batchId、targetSchoolCode、targetMajorCode、currentStatus</li>
+            <li><strong>students</strong>：姓名、性别、出生日期、学校、年级、联系方式、证件号</li>
+            <li><strong>transcripts / scores</strong>：各学科成绩、均分、挂科数、成绩单附件</li>
+            <li><strong>personal statement</strong>：个人陈述</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>审核与过程数据</h3>
+          <ul class="mini">
+            <li><strong>domestic_reviews</strong>：材料完整性、身份匹配、成绩达标、风险等级、结论、备注</li>
+            <li><strong>school_reviews</strong>：门槛判断、配额判断、学术分、材料分、匹配分、总分、学校结论</li>
+            <li><strong>waitlist_records</strong>：候补状态、确认截止时间</li>
+            <li><strong>status_histories / audit_logs</strong>：状态变化和操作轨迹</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="grid-2" style="margin-top:16px;">
+        <div class="card">
+          <h3>详情页返回的结构</h3>
+          <p>前端详情页的核心载体是 <code>GET /api/applications/{id}</code> 返回的聚合对象：</p>
+          <div class="pill-row">
+            <span class="pill">basicInfo</span>
+            <span class="pill">studentInfo</span>
+            <span class="pill">applicationInfo</span>
+            <span class="pill">scoreSummary</span>
+            <span class="pill">files</span>
+            <span class="pill">domesticReviewSummary</span>
+            <span class="pill">schoolReviewSummary</span>
+            <span class="pill">adjustmentSummary</span>
+            <span class="pill">ruleSnapshot</span>
+            <span class="pill">statusHistory</span>
+            <span class="pill">auditLogs</span>
+          </div>
+        </div>
+        <div class="card">
+          <h3>基础配置数据</h3>
+          <p>管理员配置的这些内容并不直接显示在一条申请上，但会持续影响所有后续判断：</p>
+          <div class="pill-row">
+            <span class="pill">batches</span>
+            <span class="pill">schools</span>
+            <span class="pill">majors</span>
+            <span class="pill">quotas</span>
+            <span class="pill">users</span>
+            <span class="pill">规则快照</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="status">
+      <h2 class="section-title">申请状态是怎样推进的</h2>
+      <p class="section-desc">
+        前端每个按钮本质上都在请求“把申请从一个状态推进到另一个状态”。只要理解状态流，就能理解为什么有些按钮能点、有些会报错。
+      </p>
+      <div class="timeline">
+        <div class="step">
+          <div class="index">01</div>
+          <h3>DRAFT</h3>
+          <p>代理专员创建或保存草稿后进入此状态。</p>
+          <ul class="mini">
+            <li>可编辑</li>
+            <li>可提交</li>
+            <li>调剂新草稿也属于此状态</li>
+          </ul>
+        </div>
+        <div class="step">
+          <div class="index">02</div>
+          <h3>SUBMITTED</h3>
+          <p>代理正式提交后进入国内审核池。</p>
+          <ul class="mini">
+            <li>国内审核员可认领</li>
+            <li>不可再按草稿编辑</li>
+          </ul>
+        </div>
+        <div class="step">
+          <div class="index">03</div>
+          <h3>DOMESTIC_REVIEWING</h3>
+          <p>已被国内审核员认领，等待审核结论。</p>
+          <ul class="mini">
+            <li>可通过</li>
+            <li>可要求补件</li>
+            <li>可国内拒绝</li>
+          </ul>
+        </div>
+        <div class="step">
+          <div class="index">04</div>
+          <h3>SCHOOL_REVIEWING</h3>
+          <p>国内审核通过后转入学校审核。</p>
+          <ul class="mini">
+            <li>可录取</li>
+            <li>可候补</li>
+            <li>可建议调剂</li>
+            <li>可学校拒绝</li>
+          </ul>
+        </div>
+        <div class="step">
+          <div class="index">05</div>
+          <h3>WAITLIST / RESERVED</h3>
+          <p>学校录取后进入 RESERVED，候补则进入 WAITLISTED 再等待确认。</p>
+          <ul class="mini">
+            <li>候补可被推进到待确认</li>
+            <li>待确认后可接受或关闭</li>
+          </ul>
+        </div>
+        <div class="step">
+          <div class="index">06</div>
+          <h3>CLOSED</h3>
+          <p>被拒绝、被取消、候补关闭或原申请被调剂关闭后都会落到终态。</p>
+          <ul class="mini">
+            <li>终态不可再继续推进</li>
+            <li>保留历史记录和审计日志</li>
+          </ul>
+        </div>
+      </div>
+      <div class="status-strip">
+        <div class="status-node">DRAFT</div>
+        <div class="status-node">SUBMITTED</div>
+        <div class="status-node">DOMESTIC_REVIEWING</div>
+        <div class="status-node">DOMESTIC_SUPPLEMENT</div>
+        <div class="status-node">DOMESTIC_REJECTED</div>
+        <div class="status-node">SCHOOL_REVIEWING</div>
+        <div class="status-node">WAITLISTED</div>
+        <div class="status-node">WAITLIST_PENDING_CONFIRM</div>
+        <div class="status-node">RESERVED</div>
+        <div class="status-node">ADJUSTMENT_SUGGESTED</div>
+        <div class="status-node">SCHOOL_REJECTED / CLOSED</div>
+      </div>
+    </section>
+
+    <section class="section" id="flow">
+      <h2 class="section-title">随着操作，数据如何流动</h2>
+      <p class="section-desc">
+        下面用“前端页面 -> 接口 -> 后端持久化 -> 状态/权限返回”的方式看一条申请怎么被创建、审核和收尾。
+      </p>
+      <div class="flow-box">
+        <div class="flow-lanes">
+          <div class="lane-label">1. 登录与身份建立</div>
+          <div class="lane-track">
+            <div class="track-cards">
+              <div class="track-card"><strong>登录页</strong><span>提交 username、password 到 <code>/api/auth/login</code></span></div>
+              <div class="track-card"><strong>后端返回</strong><span>token、userId、role、schoolCode、mustChangePassword</span></div>
+              <div class="track-card"><strong>前端保存</strong><span>token 写入请求头，currentUser 写入状态管理</span></div>
+            </div>
+          </div>
+
+          <div class="lane-label">2. 代理创建申请</div>
+          <div class="lane-track">
+            <div class="track-cards">
+              <div class="track-card"><strong>创建页</strong><span>学生信息、成绩信息、个人陈述、批次、学校、专业</span></div>
+              <div class="track-card"><strong>草稿入库</strong><span>applications + students + 成绩/附件 + 个人陈述</span></div>
+              <div class="track-card"><strong>状态</strong><span>DRAFT，可继续编辑，也可正式提交</span></div>
+            </div>
+          </div>
+
+          <div class="lane-label">3. 国内审核</div>
+          <div class="lane-track">
+            <div class="track-cards">
+              <div class="track-card"><strong>认领</strong><span><code>POST /api/domesticreviews/{id}/claim</code>，仅 SUBMITTED 可认领</span></div>
+              <div class="track-card"><strong>提交结论</strong><span>materialComplete、identityMatched、basicScorePassed、authenticityRiskLevel、standardizationPassed、result、comment</span></div>
+              <div class="track-card"><strong>结果</strong><span>PASS -> SCHOOL_REVIEWING；SUPPLEMENT_REQUIRED -> DOMESTIC_SUPPLEMENT；REJECT -> DOMESTIC_REJECTED</span></div>
+            </div>
+          </div>
+
+          <div class="lane-label">4. 学校审核</div>
+          <div class="lane-track">
+            <div class="track-cards">
+              <div class="track-card"><strong>学校评分</strong><span>academic_score、material_score、matching_score、total_score</span></div>
+              <div class="track-card"><strong>规则判断</strong><span>school_threshold_passed、major_threshold_passed、school_quota_passed、major_quota_passed</span></div>
+              <div class="track-card"><strong>结果</strong><span>RESERVE、WAITLIST、SUGGEST_ADJUSTMENT、REJECT</span></div>
+            </div>
+          </div>
+
+          <div class="lane-label">5. 候补 / 调剂 / 终态</div>
+          <div class="lane-track">
+            <div class="track-cards">
+              <div class="track-card"><strong>候补</strong><span>WAITLISTED -> promote -> WAITLIST_PENDING_CONFIRM -> 接受后 RESERVED，拒绝后 CLOSED</span></div>
+              <div class="track-card"><strong>调剂</strong><span>原申请会被关闭，新调剂申请生成 DRAFT，再回到代理提交流程</span></div>
+              <div class="track-card"><strong>终态沉淀</strong><span>statusHistory、auditLogs 持续累积，供前端详情页追溯</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="guide">
+      <h2 class="section-title">每个角色在前端上如何使用</h2>
+      <p class="section-desc">
+        点击不同角色，可以看到它在前端的典型路径、使用页面、请求的数据、以及每一步的判定结果。
+      </p>
+      <div class="tabs">
+        <button class="tab active" data-role="admin">管理员</button>
+        <button class="tab" data-role="agent">代理专员</button>
+        <button class="tab" data-role="domestic">国内审核员</button>
+        <button class="tab" data-role="school">学校专员</button>
+      </div>
+
+      <div class="role-panel active" data-panel="admin">
+        <div class="grid-2">
+          <div class="card">
+            <h3>管理员前端使用路径</h3>
+            <ol class="mini">
+              <li>登录页输入管理员账号，若首次登录则先改密。</li>
+              <li>进入 Dashboard，查看全局申请、用户、候补、批次指标。</li>
+              <li>进入批次、学校、专业、用户、配额页面维护基础数据。</li>
+              <li>进入审计日志与状态历史页面排查业务流转。</li>
+            </ol>
+            <div class="meta">
+              <span>登录：/api/auth/login</span>
+              <span>工作台：/api/dashboard/summary</span>
+              <span>配置：/api/batches / schools / majors / users / quotas</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>管理员的数据作用</h3>
+            <p>管理员通常不直接推进单条申请状态，但会决定所有后续流程的“边界条件”。例如批次是否启用、学校专业是否存在、配额是否足够，都会影响学校审核能否通过。</p>
+            <div class="pill-row">
+              <span class="pill">批次是否开放</span>
+              <span class="pill">学校/专业合法性</span>
+              <span class="pill">用户角色与权限</span>
+              <span class="pill">配额约束</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="role-panel" data-panel="agent">
+        <div class="grid-2">
+          <div class="card">
+            <h3>代理专员前端使用路径</h3>
+            <ol class="mini">
+              <li>登录后先看 Dashboard，确认本人草稿数、补件数、候补待确认数。</li>
+              <li>进入申请列表页查看自己的申请，按状态筛选。</li>
+              <li>进入创建页填写学生信息、成绩、个人陈述、目标学校和目标专业，先保存草稿。</li>
+              <li>在详情页检查信息，执行提交申请。</li>
+              <li>若国内审核要求补件，则再次进入详情页补充后重提。</li>
+              <li>若进入候补待确认，则执行接受/放弃；若收到调剂草稿，则继续修改并重新提交。</li>
+            </ol>
+            <div class="meta">
+              <span>列表：GET /api/applications/my</span>
+              <span>详情：GET /api/applications/{id}</span>
+              <span>提交：POST /api/applications/{id}/submit</span>
+              <span>候补确认：POST /api/applications/{id}/waitlist-confirm</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>代理提交的核心数据</h3>
+            <div class="pill-row">
+              <span class="pill">student.name</span>
+              <span class="pill">student.gender</span>
+              <span class="pill">student.birthDate</span>
+              <span class="pill">student.currentSchool</span>
+              <span class="pill">student.grade</span>
+              <span class="pill">student.email / phone</span>
+              <span class="pill">student.idCardNo</span>
+              <span class="pill">score.averageScore</span>
+              <span class="pill">score.failedSubjectCount</span>
+              <span class="pill">score.fileId</span>
+              <span class="pill">personalStatement.content</span>
+              <span class="pill">batchId</span>
+              <span class="pill">targetSchoolCode</span>
+              <span class="pill">targetMajorCode</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="role-panel" data-panel="domestic">
+        <div class="grid-2">
+          <div class="card">
+            <h3>国内审核员前端使用路径</h3>
+            <ol class="mini">
+              <li>登录后看 Dashboard，了解待认领、审核中、补件中、拒绝数量。</li>
+              <li>进入国内审核列表页，查看真实审核池。</li>
+              <li>打开某条详情，先确认当前状态是不是 SUBMITTED。</li>
+              <li>执行认领，状态变为 DOMESTIC_REVIEWING。</li>
+              <li>填写审核表单并提交，决定进入学校审核、补件或国内拒绝。</li>
+            </ol>
+            <div class="meta">
+              <span>列表：GET /api/domesticreviews</span>
+              <span>认领：POST /api/domesticreviews/{id}/claim</span>
+              <span>提交：POST /api/domesticreviews/{id}/submit</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>国内审核提交的数据</h3>
+            <div class="pill-row">
+              <span class="pill">materialComplete</span>
+              <span class="pill">identityMatched</span>
+              <span class="pill">basicScorePassed</span>
+              <span class="pill">authenticityRiskLevel</span>
+              <span class="pill">standardizationPassed</span>
+              <span class="pill">result: PASS / SUPPLEMENT_REQUIRED / REJECT</span>
+              <span class="pill">comment</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="role-panel" data-panel="school">
+        <div class="grid-2">
+          <div class="card">
+            <h3>学校专员前端使用路径</h3>
+            <ol class="mini">
+              <li>登录后先看本校工作台指标，只看到本校目标申请。</li>
+              <li>进入学校审核列表页，查看本校学校审核池。</li>
+              <li>打开详情，核对学生、学校、专业、历史状态和前置审核摘要。</li>
+              <li>填写分项评分与结论，提交学校审核。</li>
+              <li>如果给出候补，后续由候补流程继续推进；如果建议调剂，会生成新的调剂草稿。</li>
+            </ol>
+            <div class="meta">
+              <span>列表：GET /api/school-reviews</span>
+              <span>详情：GET /api/applications/{id}</span>
+              <span>提交：POST /api/school-reviews/{id}/submit</span>
+            </div>
+          </div>
+          <div class="card">
+            <h3>学校审核提交的数据</h3>
+            <div class="pill-row">
+              <span class="pill">school_threshold_passed</span>
+              <span class="pill">major_threshold_passed</span>
+              <span class="pill">school_quota_passed</span>
+              <span class="pill">major_quota_passed</span>
+              <span class="pill">academic_score</span>
+              <span class="pill">material_score</span>
+              <span class="pill">matching_score</span>
+              <span class="pill">total_score</span>
+              <span class="pill">review_result: RESERVE / WAITLIST / SUGGEST_ADJUSTMENT / REJECT</span>
+              <span class="pill">review_reason</span>
+              <span class="pill">suggested_major_code</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="judge">
+      <h2 class="section-title">每一步怎么判断“通过”还是进入什么状态</h2>
+      <p class="section-desc">
+        这部分是最适合讲给老师听的。因为前端看到的不是“随便一个按钮”，而是基于权限、当前状态、表单数据共同决定是否可执行。
+      </p>
+      <table class="detail-table">
+        <tbody>
+          <tr>
+            <th>登录</th>
+            <td>提交 <code>username + password</code> 到 <code>/api/auth/login</code>。如果成功，返回 token 和角色；如果 <code>mustChangePassword = true</code>，前端必须先走改密页，未改密时业务接口会被拦截。</td>
+          </tr>
+          <tr>
+            <th>保存草稿</th>
+            <td>只要代理提交了基础表单数据，后端会将申请保存为 <code>DRAFT</code>。此时主要目标是把申请结构建立起来，并记录学生、成绩、个人陈述、目标学校与专业。</td>
+          </tr>
+          <tr>
+            <th>正式提交申请</th>
+            <td>只有 <code>DRAFT</code> 或 <code>DOMESTIC_SUPPLEMENT</code> 状态可以重新提交。提交成功后变为 <code>SUBMITTED</code>，表示进入国内审核池。</td>
+          </tr>
+          <tr>
+            <th>国内审核认领</th>
+            <td>只有当前状态是 <code>SUBMITTED</code> 时，国内审核员才能调用认领接口。认领成功后变为 <code>DOMESTIC_REVIEWING</code>。</td>
+          </tr>
+          <tr>
+            <th>国内审核提交</th>
+            <td>
+              只有 <code>DOMESTIC_REVIEWING</code> 可提交。<br />
+              <code>result = PASS</code> -> <code>SCHOOL_REVIEWING</code><br />
+              <code>result = SUPPLEMENT_REQUIRED</code> -> <code>DOMESTIC_SUPPLEMENT</code><br />
+              <code>result = REJECT</code> -> <code>DOMESTIC_REJECTED</code>
+            </td>
+          </tr>
+          <tr>
+            <th>学校审核提交</th>
+            <td>
+              只有 <code>SCHOOL_REVIEWING</code> 可提交。<br />
+              <code>RESERVE</code> -> <code>RESERVED</code><br />
+              <code>WAITLIST</code> -> <code>WAITLISTED</code><br />
+              <code>SUGGEST_ADJUSTMENT</code> -> 原申请先进入 <code>ADJUSTMENT_SUGGESTED</code>，随后原申请关闭，并生成新的调剂草稿 <code>DRAFT</code><br />
+              <code>REJECT</code> -> <code>SCHOOL_REJECTED</code>
+            </td>
+          </tr>
+          <tr>
+            <th>候补推进</th>
+            <td>只有 <code>WAITLISTED</code> 才能被推进为 <code>WAITLIST_PENDING_CONFIRM</code>。这一步会生成候补确认期限等信息。</td>
+          </tr>
+          <tr>
+            <th>候补确认</th>
+            <td>
+              只有 <code>WAITLIST_PENDING_CONFIRM</code> 才能确认。<br />
+              接受 -> <code>RESERVED</code><br />
+              拒绝 / 失效 -> <code>CLOSED</code>
+            </td>
+          </tr>
+          <tr>
+            <th>调剂处理</th>
+            <td>“接受调剂”并不是对原申请直接点。它只能作用在学校建议调剂后生成的“新调剂草稿”上。这个草稿本身必须是 <code>DRAFT</code> 且带 <code>sourceApplicationId</code>，接受后重新进入 <code>SUBMITTED</code>。</td>
+          </tr>
+          <tr>
+            <th>终态</th>
+            <td><code>DOMESTIC_REJECTED</code>、<code>SCHOOL_REJECTED</code>、候补拒绝、取消、原申请被调剂关闭等情形最终都会沉淀为 <code>CLOSED</code> 或终止性状态，前端仍可查看历史，但不再继续推进。</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="legend">
+        <div class="legend-item"><span class="dot" style="background: var(--accent);"></span>蓝色：常规进行中状态</div>
+        <div class="legend-item"><span class="dot" style="background: var(--green);"></span>绿色：通过或录取类结果</div>
+        <div class="legend-item"><span class="dot" style="background: var(--yellow);"></span>黄色：待补件、候补、待确认类中间状态</div>
+        <div class="legend-item"><span class="dot" style="background: var(--red);"></span>红色：拒绝或关闭类终止状态</div>
+      </div>
+
+      <p class="footer-note">
+        口头汇报时可以用一句话概括：前端并不是简单展示表单，而是在不同角色下，把申请、审核、候补、调剂等数据对象按状态驱动的方式串成一条完整业务链。
+      </p>
+    </section>
+  </div>
+
+  <script>
+    const tabs = document.querySelectorAll('.tab');
+    const panels = document.querySelectorAll('.role-panel');
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        tabs.forEach((item) => item.classList.remove('active'));
+        panels.forEach((panel) => panel.classList.remove('active'));
+        tab.classList.add('active');
+        const panel = document.querySelector(`[data-panel="${tab.dataset.role}"]`);
+        if (panel) panel.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>

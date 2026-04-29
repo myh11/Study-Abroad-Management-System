@@ -5,6 +5,8 @@ import com.example.admissionsystem.applications.service.ApplicationStatusService
 import com.example.admissionsystem.auth.model.UserRole;
 import com.example.admissionsystem.auth.security.AuthUserPrincipal;
 import com.example.admissionsystem.domesticreviews.dto.DomesticReviewSubmitRequest;
+import com.example.admissionsystem.domesticreviews.vo.DomesticReviewListItemVO;
+import com.example.admissionsystem.domesticreviews.vo.DomesticReviewPageVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -15,7 +17,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -27,6 +31,55 @@ public class DomesticReviewService {
 
     private final JdbcTemplate jdbcTemplate;
     private final ApplicationStatusService applicationStatusService;
+
+    public DomesticReviewPageVO list(Integer page, Integer pageSize, String status, Long batchId) {
+        AuthUserPrincipal currentUser = requireDomesticReviewerOrAdmin();
+        int safePage = page != null && page > 0 ? page : 1;
+        int safePageSize = pageSize != null && pageSize > 0 ? pageSize : 20;
+        int offset = (safePage - 1) * safePageSize;
+
+        StringBuilder baseSql = new StringBuilder("""
+                FROM applications a
+                JOIN students s ON s.id = a.student_id
+                WHERE a.current_status IN ('SUBMITTED', 'DOMESTIC_REVIEWING', 'DOMESTIC_SUPPLEMENT', 'DOMESTIC_REJECTED')
+                """);
+        List<Object> params = new ArrayList<>();
+        if (status != null && !status.isBlank()) {
+            baseSql.append(" AND a.current_status = ?");
+            params.add(status.trim());
+        }
+        if (batchId != null) {
+            baseSql.append(" AND a.batch_id = ?");
+            params.add(batchId);
+        }
+
+        Long total = jdbcTemplate.queryForObject("SELECT COUNT(*) " + baseSql, Long.class, params.toArray());
+        String querySql = """
+                SELECT a.id, s.name AS student_name, a.target_school_code, a.target_major_code,
+                       a.current_status, a.batch_id, a.updated_at
+                """ + baseSql + """
+                ORDER BY a.updated_at DESC, a.id DESC
+                LIMIT ? OFFSET ?
+                """;
+        params.add(safePageSize);
+        params.add(offset);
+        List<DomesticReviewListItemVO> list = jdbcTemplate.query(querySql, (rs, rowNum) -> DomesticReviewListItemVO.builder()
+                .applicationId(rs.getLong("id"))
+                .studentName(rs.getString("student_name"))
+                .targetSchoolCode(rs.getString("target_school_code"))
+                .targetMajorCode(rs.getString("target_major_code"))
+                .status(ApplicationStatus.valueOf(rs.getString("current_status")))
+                .batchId(rs.getLong("batch_id"))
+                .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime().toString())
+                .build(), params.toArray());
+
+        return DomesticReviewPageVO.builder()
+                .list(list)
+                .page(safePage)
+                .pageSize(safePageSize)
+                .total(total == null ? 0L : total)
+                .build();
+    }
 
     @Transactional
     public String claim(Long applicationId) {
@@ -114,6 +167,15 @@ public class DomesticReviewService {
         if (request.getAuthenticityRiskLevel() == null || request.getAuthenticityRiskLevel().isBlank()) {
             throw new IllegalArgumentException("authenticityRiskLevel is required");
         }
+    }
+
+    private AuthUserPrincipal requireDomesticReviewerOrAdmin() {
+        Object principal = getContext().getAuthentication() == null ? null : getContext().getAuthentication().getPrincipal();
+        if (principal instanceof AuthUserPrincipal authUserPrincipal
+                && (authUserPrincipal.getRole() == UserRole.DOMESTIC_REVIEWER || authUserPrincipal.getRole() == UserRole.ADMIN)) {
+            return authUserPrincipal;
+        }
+        throw new IllegalArgumentException("Only DOMESTIC_REVIEWER or ADMIN can access domestic review list");
     }
 
     private AuthUserPrincipal requireDomesticReviewer() {

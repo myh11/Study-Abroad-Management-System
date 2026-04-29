@@ -37,7 +37,11 @@ const decisionForm = reactive({
 
 const applicationId = computed(() => Number(route.params.id))
 const totalScore = computed(() => scoreForm.academic + scoreForm.material + scoreForm.matching)
-const canSubmit = computed(() => authStore.currentUser?.role === 'SCHOOL_REVIEWER')
+const canSubmit = computed(
+  () =>
+    authStore.currentUser?.role === 'SCHOOL_REVIEWER' &&
+    application.value?.current_status === 'SCHOOL_REVIEWING',
+)
 const schoolCode = computed(() => application.value?.school_code || authStore.currentUser?.school_code || '')
 const reviewDecisions = [
   { value: 'RESERVE', label: '占位录取', hint: '直接占用学校与专业配额。', tone: 'success' },
@@ -76,7 +80,7 @@ async function loadApplication() {
 
 async function handleSubmit() {
   if (!canSubmit.value) {
-    toast.error('只有学校审核员可以提交学校审核结果')
+    toast.error('只有学校审核中的申请，且当前账号为学校审核员时，才允许提交学校审核结果')
     return
   }
   if (!application.value) {
@@ -294,7 +298,7 @@ onMounted(loadApplication)
               type="warning"
               :closable="false"
               show-icon
-              title="当前账号不是学校审核员，只允许查看详情，不允许提交决策。"
+              title="当前账号没有学校审核提交权限，或这条申请当前不处于 SCHOOL_REVIEWING 状态。"
             />
 
             <div class="decision-actions">

@@ -6,6 +6,8 @@ import com.example.admissionsystem.auth.model.UserRole;
 import com.example.admissionsystem.auth.security.AuthUserPrincipal;
 import com.example.admissionsystem.quotas.service.QuotaConcurrencyService;
 import com.example.admissionsystem.schoolreviews.dto.SchoolReviewSubmitRequest;
+import com.example.admissionsystem.schoolreviews.vo.SchoolReviewListItemVO;
+import com.example.admissionsystem.schoolreviews.vo.SchoolReviewPageVO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
@@ -17,7 +19,9 @@ import java.sql.PreparedStatement;
 import java.sql.Statement;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 
@@ -30,6 +34,63 @@ public class SchoolReviewService {
     private final ApplicationStatusService applicationStatusService;
     private final QuotaConcurrencyService quotaConcurrencyService;
     private final JdbcTemplate jdbcTemplate;
+
+    public SchoolReviewPageVO list(Integer page, Integer pageSize, String status, Long batchId, String schoolCode) {
+        AuthUserPrincipal currentUser = requireSchoolReviewerOrAdmin();
+        int safePage = page != null && page > 0 ? page : 1;
+        int safePageSize = pageSize != null && pageSize > 0 ? pageSize : 20;
+        int offset = (safePage - 1) * safePageSize;
+
+        StringBuilder baseSql = new StringBuilder("""
+                FROM applications a
+                JOIN students s ON s.id = a.student_id
+                WHERE a.current_status IN ('SCHOOL_REVIEWING', 'WAITLISTED', 'WAITLIST_PENDING_CONFIRM',
+                                           'RESERVED', 'ADJUSTMENT_SUGGESTED', 'SCHOOL_REJECTED', 'CLOSED')
+                """);
+        List<Object> params = new ArrayList<>();
+        if (currentUser.getRole() == UserRole.SCHOOL_REVIEWER) {
+            baseSql.append(" AND a.target_school_code = ?");
+            params.add(currentUser.getSchoolCode());
+        } else if (schoolCode != null && !schoolCode.isBlank()) {
+            baseSql.append(" AND a.target_school_code = ?");
+            params.add(schoolCode.trim());
+        }
+        if (status != null && !status.isBlank()) {
+            baseSql.append(" AND a.current_status = ?");
+            params.add(status.trim());
+        }
+        if (batchId != null) {
+            baseSql.append(" AND a.batch_id = ?");
+            params.add(batchId);
+        }
+
+        Long total = jdbcTemplate.queryForObject("SELECT COUNT(*) " + baseSql, Long.class, params.toArray());
+        String querySql = """
+                SELECT a.id, s.name AS student_name, a.target_school_code, a.target_major_code,
+                       a.current_status, a.batch_id, a.updated_at
+                """ + baseSql + """
+                ORDER BY a.updated_at DESC, a.id DESC
+                LIMIT ? OFFSET ?
+                """;
+        params.add(safePageSize);
+        params.add(offset);
+        List<SchoolReviewListItemVO> list = jdbcTemplate.query(querySql, (rs, rowNum) -> SchoolReviewListItemVO.builder()
+                .applicationId(rs.getLong("id"))
+                .studentName(rs.getString("student_name"))
+                .targetSchoolCode(rs.getString("target_school_code"))
+                .targetMajorCode(rs.getString("target_major_code"))
+                .status(ApplicationStatus.valueOf(rs.getString("current_status")))
+                .batchId(rs.getLong("batch_id"))
+                .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime().toString())
+                .build(), params.toArray());
+
+        return SchoolReviewPageVO.builder()
+                .list(list)
+                .page(safePage)
+                .pageSize(safePageSize)
+                .total(total == null ? 0L : total)
+                .build();
+    }
 
     @Transactional
     public String submit(Long applicationId, SchoolReviewSubmitRequest request) {
@@ -233,6 +294,15 @@ public class SchoolReviewService {
                 || request.getMatchingScore() == null || request.getTotalScore() == null) {
             throw new IllegalArgumentException("academic_score, material_score, matching_score and total_score are required");
         }
+    }
+
+    private AuthUserPrincipal requireSchoolReviewerOrAdmin() {
+        Object principal = getContext().getAuthentication() == null ? null : getContext().getAuthentication().getPrincipal();
+        if (principal instanceof AuthUserPrincipal authUserPrincipal
+                && (authUserPrincipal.getRole() == UserRole.SCHOOL_REVIEWER || authUserPrincipal.getRole() == UserRole.ADMIN)) {
+            return authUserPrincipal;
+        }
+        throw new IllegalArgumentException("Only SCHOOL_REVIEWER or ADMIN can access school review list");
     }
 
     private void ensureSuggestedMajorValid(ReviewResult reviewResult, String suggestedMajorCode, String schoolCode) {

@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>数据库汇报图示页</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: linear-gradient(180deg, #07111f, #0a1830 48%, #07111f);
+      color: #eef6ff;
+    }
+    .page {
+      width: min(1360px, calc(100vw - 40px));
+      margin: 0 auto;
+      padding: 28px 0 48px;
+    }
+    .hero, .section, .card {
+      background: rgba(9, 19, 38, 0.86);
+      border: 1px solid rgba(135, 193, 255, 0.16);
+      border-radius: 18px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.34);
+    }
+    .hero, .section {
+      padding: 26px;
+      margin-bottom: 18px;
+    }
+    h1, h2, h3, p { margin: 0; }
+    h1 { font-size: 38px; margin-bottom: 10px; }
+    h2 { font-size: 26px; margin-bottom: 8px; }
+    .sub { color: #9fb6d4; margin-bottom: 18px; }
+    .grid-5, .grid-2, .grid-3 {
+      display: grid;
+      gap: 14px;
+    }
+    .grid-5 { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    .grid-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+    .grid-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .card {
+      padding: 16px;
+    }
+    .card p, li, td, th { color: #b8cae0; }
+    .tier {
+      min-height: 180px;
+    }
+    .tag {
+      display: inline-block;
+      margin: 6px 6px 0 0;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .center {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+    }
+    .core {
+      min-height: 220px;
+      background:
+        radial-gradient(circle at center, rgba(94,200,255,0.16), transparent 58%),
+        rgba(9, 19, 38, 0.86);
+    }
+    .core strong {
+      display: block;
+      font-size: 30px;
+      margin-bottom: 8px;
+      color: #ffffff;
+    }
+    .arrow-row {
+      display: grid;
+      grid-template-columns: repeat(6, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .arrow-card {
+      padding: 14px 12px;
+      border-radius: 14px;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      min-height: 134px;
+      position: relative;
+    }
+    .arrow-card::after {
+      content: "→";
+      position: absolute;
+      right: -12px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: rgba(255,255,255,0.35);
+      font-size: 22px;
+    }
+    .arrow-card:last-child::after { display: none; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    th, td {
+      padding: 12px 13px;
+      text-align: left;
+      border-bottom: 1px solid rgba(255,255,255,0.07);
+      vertical-align: top;
+      font-size: 14px;
+    }
+    th {
+      color: #e9f5ff;
+      background: rgba(255,255,255,0.04);
+    }
+    tr:last-child td, tr:last-child th { border-bottom: none; }
+    ul {
+      margin: 10px 0 0;
+      padding-left: 18px;
+    }
+    li { margin: 4px 0; }
+    @media (max-width: 1100px) {
+      .grid-5, .grid-3, .grid-2, .arrow-row { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 760px) {
+      .grid-5, .grid-3, .grid-2, .arrow-row { grid-template-columns: 1fr; }
+      .arrow-card::after { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="hero">
+      <h1>数据库汇报图示页</h1>
+      <p class="sub">给同学 D 和同学 E 配套使用。D 讲“数据库结构”，E 讲“数据流和状态流”。这页主要负责帮他们把图和关系讲清楚。</p>
+      <div class="grid-2">
+        <div class="card">
+          <h3>同学 D 负责</h3>
+          <ul>
+            <li>数据库分层</li>
+            <li>核心表分类</li>
+            <li>主表与子表关系</li>
+            <li>为什么这样设计</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>同学 E 负责</h3>
+          <ul>
+            <li>申请从创建到结束的数据流</li>
+            <li>每一步写哪些表</li>
+            <li>状态如何变化</li>
+            <li>候补、调剂、日志怎么联动</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>一、数据库五层结构</h2>
+      <p class="sub">最适合 D 直接照着讲。把复杂数据库先拆成五层，老师会更容易听懂。</p>
+      <div class="grid-5">
+        <div class="card tier">
+          <h3>基础配置层</h3>
+          <p>系统开机就要用到的静态或半静态数据。</p>
+          <span class="tag">users</span>
+          <span class="tag">batches</span>
+          <span class="tag">schools</span>
+          <span class="tag">majors</span>
+          <span class="tag">school_quotas</span>
+          <span class="tag">major_quotas</span>
+        </div>
+        <div class="card tier">
+          <h3>申请主体层</h3>
+          <p>一条申请本身和学生资料内容。</p>
+          <span class="tag">applications</span>
+          <span class="tag">students</span>
+          <span class="tag">transcripts</span>
+          <span class="tag">personal_statements</span>
+        </div>
+        <div class="card tier">
+          <h3>审核过程层</h3>
+          <p>保留审核内容，不只改主表状态。</p>
+          <span class="tag">domestic_reviews</span>
+          <span class="tag">school_reviews</span>
+        </div>
+        <div class="card tier">
+          <h3>衍生流程层</h3>
+          <p>承接候补、调剂、规则快照等特殊分支。</p>
+          <span class="tag">waitlist_records</span>
+          <span class="tag">rule_snapshots</span>
+        </div>
+        <div class="card tier">
+          <h3>追踪留痕层</h3>
+          <p>记录状态轨迹和操作行为。</p>
+          <span class="tag">application_status_histories</span>
+          <span class="tag">audit_logs</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>二、中心主表关系图</h2>
+      <p class="sub">这一张最适合强调：`applications` 是核心主线，其他表围绕它展开。</p>
+      <div class="grid-3">
+        <div class="card">
+          <h3>左侧：基础约束</h3>
+          <ul>
+            <li>`batches` 决定属于哪个招生批次</li>
+            <li>`schools` 决定目标学校</li>
+            <li>`majors` 决定目标专业</li>
+            <li>`users` 决定创建人和角色权限</li>
+          </ul>
+        </div>
+        <div class="card core center">
+          <div>
+            <strong>applications</strong>
+            <p>主表，承载 applicationId、当前状态、目标学校、目标专业、批次、创建人等核心字段。</p>
+          </div>
+        </div>
+        <div class="card">
+          <h3>右侧：过程与留痕</h3>
+          <ul>
+            <li>`domestic_reviews` 国内审核记录</li>
+            <li>`school_reviews` 学校审核记录</li>
+            <li>`waitlist_records` 候补记录</li>
+            <li>`application_status_histories` 状态历史</li>
+            <li>`audit_logs` 审计日志</li>
+          </ul>
+        </div>
+      </div>
+      <div class="grid-3" style="margin-top:14px;">
+        <div class="card"><h3>资料子表</h3><p>`students`、`transcripts`、`personal_statements` 用来承接学生资料和文书内容。</p></div>
+        <div class="card"><h3>规则上下文</h3><p>`rule_snapshots` 用于保留当时规则快照，避免后续配置变化影响历史解释。</p></div>
+        <div class="card"><h3>配额判断</h3><p>学校和专业配额独立建模，学校审核时会读取并参与判断。</p></div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>三、数据流总图</h2>
+      <p class="sub">这一段给 E 用。按时间顺序看，一条申请如何从草稿走到终态。</p>
+      <div class="arrow-row">
+        <div class="arrow-card">
+          <h3>1. 创建草稿</h3>
+          <p>写入 `applications`、`students`、`transcripts`、`personal_statements`。</p>
+          <p>状态：`DRAFT`</p>
+        </div>
+        <div class="arrow-card">
+          <h3>2. 提交申请</h3>
+          <p>更新 `applications.current_status`，同步写状态历史和审计日志。</p>
+          <p>状态：`SUBMITTED`</p>
+        </div>
+        <div class="arrow-card">
+          <h3>3. 国内审核</h3>
+          <p>写 `domestic_reviews`，并推进到学校审核 / 补件 / 国内拒绝。</p>
+        </div>
+        <div class="arrow-card">
+          <h3>4. 学校审核</h3>
+          <p>写 `school_reviews`，并决定录取 / 候补 / 调剂 / 拒绝。</p>
+        </div>
+        <div class="arrow-card">
+          <h3>5. 候补或调剂</h3>
+          <p>候补写 `waitlist_records`；调剂会新生成一条申请草稿。</p>
+        </div>
+        <div class="arrow-card">
+          <h3>6. 留痕闭环</h3>
+          <p>整个过程中 `application_status_histories` 和 `audit_logs` 持续累积。</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>四、状态流转图</h2>
+      <p class="sub">这一张很适合老师问“状态怎么走”的时候直接指着讲。</p>
+      <table>
+        <thead>
+          <tr>
+            <th>当前状态</th>
+            <th>触发角色/动作</th>
+            <th>下一状态</th>
+            <th>备注</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>DRAFT</td>
+            <td>代理提交申请</td>
+            <td>SUBMITTED</td>
+            <td>正式进入审核池</td>
+          </tr>
+          <tr>
+            <td>SUBMITTED</td>
+            <td>国内审核员认领</td>
+            <td>DOMESTIC_REVIEWING</td>
+            <td>只有已提交申请才能认领</td>
+          </tr>
+          <tr>
+            <td>DOMESTIC_REVIEWING</td>
+            <td>国内审核通过</td>
+            <td>SCHOOL_REVIEWING</td>
+            <td>进入学校审核</td>
+          </tr>
+          <tr>
+            <td>DOMESTIC_REVIEWING</td>
+            <td>国内审核补件</td>
+            <td>DOMESTIC_SUPPLEMENT</td>
+            <td>回到代理补资料</td>
+          </tr>
+          <tr>
+            <td>DOMESTIC_REVIEWING</td>
+            <td>国内审核拒绝</td>
+            <td>DOMESTIC_REJECTED</td>
+            <td>拒绝性结果</td>
+          </tr>
+          <tr>
+            <td>SCHOOL_REVIEWING</td>
+            <td>学校录取</td>
+            <td>RESERVED</td>
+            <td>学校审核通过</td>
+          </tr>
+          <tr>
+            <td>SCHOOL_REVIEWING</td>
+            <td>学校候补</td>
+            <td>WAITLISTED</td>
+            <td>进入候补链</td>
+          </tr>
+          <tr>
+            <td>SCHOOL_REVIEWING</td>
+            <td>建议调剂</td>
+            <td>原申请关闭 + 新申请 DRAFT</td>
+            <td>新开一条调剂链路</td>
+          </tr>
+          <tr>
+            <td>SCHOOL_REVIEWING</td>
+            <td>学校拒绝</td>
+            <td>SCHOOL_REJECTED</td>
+            <td>拒绝性结果</td>
+          </tr>
+          <tr>
+            <td>WAITLISTED</td>
+            <td>候补推进</td>
+            <td>WAITLIST_PENDING_CONFIRM</td>
+            <td>等待代理确认</td>
+          </tr>
+          <tr>
+            <td>WAITLIST_PENDING_CONFIRM</td>
+            <td>接受候补</td>
+            <td>RESERVED</td>
+            <td>转为录取保留</td>
+          </tr>
+          <tr>
+            <td>WAITLIST_PENDING_CONFIRM</td>
+            <td>拒绝/失效</td>
+            <td>CLOSED</td>
+            <td>终止流程</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>五、最适合口头汇报的总结</h2>
+      <div class="grid-2">
+        <div class="card">
+          <h3>D 的一句话总结</h3>
+          <p>数据库是按“基础配置、申请主体、审核过程、衍生流程、追踪留痕”五层拆开的，`applications` 是中心主表，其它表围绕它服务。</p>
+        </div>
+        <div class="card">
+          <h3>E 的一句话总结</h3>
+          <p>系统围绕 `applicationId` 驱动全流程，前端每次操作都会让主表状态推进，同时写入审核记录、候补记录、状态历史和审计日志。</p>
+        </div>
+      </div>
+    </section>
+  </div>
+</body>
+</html>
